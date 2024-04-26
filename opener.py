@@ -125,7 +125,6 @@ def parse_body(email: str) -> str:
     return "\n".join(email.split("\n")[1:])
 
 def main():
-    os.environ["OPENAI_API_KEY"] = "sk-proj-xB60QtrmOIfhzFCw3d3kT3BlbkFJ1Gt6KTjwRaPJlvi56USa"
     template_path = "opener_prompt.md"
     agent = OpenerAgent(llm=None, template_path=template_path, leads_path="leads.xlsx")
     data = agent.generate_email()
