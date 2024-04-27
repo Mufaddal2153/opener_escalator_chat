@@ -12,7 +12,9 @@ class Lead:
         department: str,
         project_title: str,
         looking_for: str,
-        lead_response: str = None
+        lead_response: str = None,
+        email_subject: str = None,
+        email_body: str = None
     ) -> None:
         self.name = name
         self.job_title = job_title
@@ -21,7 +23,9 @@ class Lead:
         self.department = department
         self.project_title = project_title
         self.looking_for = looking_for
-        self.lead_response = None
+        self.lead_response = lead_response
+        self.email_subject = email_subject
+        self.email_body = email_body
 
 
 class OpenerAgent:
@@ -122,14 +126,15 @@ class EscalatorAgent:
     def __init__(self, 
         llm: object, 
         template_path: str,
-        leads_path: str
+        leads_path: str,
+        opener_path: str
     ) -> None:
         self.temperature = 0
         self.model_name = 'gpt-3.5-turbo'
         self.max_tokens = 300
         self.llm = ChatOpenAI(temperature=self.temperature, model_name=self.model_name, max_tokens=self.max_tokens)
         self.template = self._load_template(template_path)
-        self.leads = self._load_leads(leads_path)
+        self.leads = self._load_leads(leads_path, opener_path)
         self.replacements = {
             "name": "name",
             "job_title": "job_title",
@@ -159,6 +164,7 @@ class EscalatorAgent:
 
     def _load_leads(self, path: str) -> List[Lead]:
         data = self.read_excel_dynamic(path)
+        opener = pd.read_excel("opener_output.xlsx")
         leads = []
         for i, row in data.iterrows():
             lead = Lead(
@@ -169,7 +175,9 @@ class EscalatorAgent:
                 department=row["Department"],
                 project_title=row["Project Title"],
                 looking_for=row["Looking For"],
-                lead_response=row["Lead Response"]
+                lead_response=row["Lead Response"],
+                email_subject=opener["Email Subject"][i],
+                email_body=opener["Email Body"][i]
             )
             leads.append(lead)
         return leads
@@ -180,7 +188,7 @@ class EscalatorAgent:
             return f.read()
 
 
-    def _make_prompt(self) -> PromptTemplate:
+    def _make_prompt(self) -> List[tuple]:
         print("Making template...")
         prompts = []
         for lead in self.leads:
@@ -203,7 +211,10 @@ class EscalatorAgent:
             "emails": [],
             "prompts": [],
             "name": [],
-            "looking_for": []
+            "looking_for": [],
+            "email_subject": [],
+            "email_body": [],
+            "lead_response": []
         }
         for i, prompt in enumerate(self.prompts):
             email = self.llm.invoke(prompt)
@@ -211,6 +222,9 @@ class EscalatorAgent:
             data['prompts'].append(prompt)
             data['name'].append(self.leads[i].name)
             data['looking_for'].append(self.leads[i].looking_for)
+            data['email_subject'].append(self.leads[i].email_subject)
+            data['email_body'].append(self.leads[i].email_body)
+            data['lead_response'].append(self.leads[i].lead_response)
         return data
 
 def parse_subject(email: str) -> str:
@@ -245,6 +259,30 @@ def main():
 
     print(p_data)
 
+def escalator():
+    template_path = "escalator_prompt.md"
+    agent = EscalatorAgent(llm=None, template_path=template_path, leads_path="leads.xlsx", opener_path="opener_output.xlsx")
+    data = agent.generate_email()
+    escalator_df = {
+        "Model Name": [],
+        "Temperature": [],
+        "Name": [],
+        "Looking For": [],
+        "Prompt": [],
+        "Email Subject": [],
+        "Email Body": [],
+        "Lead Response": [],
+    }
+    for i in range(len(data['emails'])):
+        escalator_df["Model Name"].append(data['model_name'])
+        escalator_df["Temperature"].append(data['temperature'])
+        escalator_df["Name"].append(data['name'][i])
+        escalator_df["Looking For"].append(data['looking_for'][i])
+        escalator_df["Prompt"].append(data['prompts'][i])
+        escalator_df["Email Subject"].append(data['email_subject'][i])
+        escalator_df["Email Body"].append(data['email_body'][i])
+        escalator_df["Lead Response"].append(data['lead_response'][i])
+        
 
 if __name__ == "__main__":
     main()
