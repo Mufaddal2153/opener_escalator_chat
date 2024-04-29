@@ -1,4 +1,4 @@
-## Antematter Sales Agent: Automate Your Cold Emails 
+## Automate Your Cold Emails 
 
 This Python project streamlines your sales prospecting with a two-step solution:
 
