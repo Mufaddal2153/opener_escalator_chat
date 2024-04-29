@@ -329,6 +329,6 @@ def escalator(
     
         
 
-if __name__ == "__main__":
-    # main()
-    escalator()
+# if __name__ == "__main__":
+#     main()
+#     escalator()
