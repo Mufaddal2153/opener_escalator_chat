@@ -25,7 +25,7 @@ This Python project streamlines your sales prospecting with a two-step solution:
 
 4. **Configure Your LLM:**
 
-   - Replace `llm = ...` in `opener_agent.py` with your LLM interaction library's object (e.g., ChatOpenAI).
+   - Replace `llm = ...` in `main.py` with your LLM interaction library's object (e.g., ChatOpenAI).
    - Obtain your OpenAI API key (if using OpenAI) and set the appropriate environment variable.
 
 5. **Prepare Your Leads:**
