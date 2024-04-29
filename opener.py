@@ -238,7 +238,11 @@ def parse_subject(email: str) -> str:
 def parse_body(email: str) -> str:
     return "\n".join(email.split("\n")[1:])
 
-def main():
+def main(
+    prompt_path: str = "opener_prompt.md",
+    leads_path: str = "leads.xlsx",
+    opener_path: str = "opener_output.xlsx"
+                      ):
     template_path = "opener_prompt.md"
     agent = OpenerAgent(llm=None, template_path=template_path, leads_path="leads.xlsx")
     data = agent.generate_email()
@@ -264,9 +268,13 @@ def main():
 
     print(p_data)
 
-def escalator():
-    template_path = "escalator_prompt.md"
-    agent = EscalatorAgent(llm=None, template_path=template_path, leads_path="leads.xlsx", opener_path="opener_output.xlsx")
+def escalator(
+    prompt_path: str = "escalator_prompt.md",
+    leads_path: str = "leads.xlsx",
+    opener_path: str = "opener_output.xlsx"
+    ):
+    template_path = prompt_path
+    agent = EscalatorAgent(llm=None, template_path=template_path, leads_path=leads_path, opener_path=opener_path)
     data = agent.generate_email()
     escalator_df = {
         "Model Name": [],
