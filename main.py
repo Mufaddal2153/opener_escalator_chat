@@ -60,22 +60,27 @@ class OpenerAgent:
         print("Opener Prompts generated!")
 
 
-    def read_excel_dynamic(self, path: str) -> pd.DataFrame:
-        df = pd.read_excel(path)
+    def read_csv_dynamic(self, path: str) -> pd.DataFrame:
+        df = pd.read_csv(path)
         non_empty_row = next((i for i, row in df.iterrows() if not row.isnull().all()), None)
         if non_empty_row is not None:
             df.columns = df.iloc[non_empty_row]
             df = df.iloc[non_empty_row+1:]
             non_empty_col = df.notna().any(axis=0)
             df = df.loc[:, non_empty_col]
-        else:
-            print("Excel file seems to be empty!")
-            df = pd.DataFrame()
+        df_columns = df.columns.to_list()
+        df_columns = [str(x).strip().lower() for x in df_columns]
+        if "name" not in df_columns:
+            df_row_1 = df.columns.to_list()
+            df.columns = ["Name", "Job Title", "Organization", "Company Size", "Department", "Project Title","Looking For","Lead Response"]
+            df = pd.concat([pd.DataFrame([df_row_1], columns=df.columns), df], ignore_index=True)
+        df.reset_index(drop=True, inplace=True)
+        df = df.dropna(how='all')
         return df
 
 
     def _load_leads(self, path: str) -> List[Lead]:
-        data = self.read_excel_dynamic(path)
+        data = self.read_csv_dynamic(path)
         leads = []
         for i, row in data.iterrows():
             lead = Lead(
@@ -168,17 +173,22 @@ class EscalatorAgent:
         print("Escalator Prompts generated!")
 
 
-    def read_excel_dynamic(self, path: str) -> pd.DataFrame:
-        df = pd.read_excel(path)
+    def read_csv_dynamic(self, path: str) -> pd.DataFrame:
+        df = pd.read_csv(path)
         non_empty_row = next((i for i, row in df.iterrows() if not row.isnull().all()), None)
         if non_empty_row is not None:
             df.columns = df.iloc[non_empty_row]
             df = df.iloc[non_empty_row+1:]
             non_empty_col = df.notna().any(axis=0)
             df = df.loc[:, non_empty_col]
-        else:
-            print("Excel file seems to be empty!")
-            df = pd.DataFrame()
+        df_columns = df.columns.to_list()
+        df_columns = [str(x).strip().lower() for x in df_columns]
+        if "name" not in df_columns:
+            df_row_1 = df.columns.to_list()
+            df.columns = ["Name", "Job Title", "Organization", "Company Size", "Department", "Project Title","Looking For","Lead Response"]
+            df = pd.concat([pd.DataFrame([df_row_1], columns=df.columns), df], ignore_index=True)
+        df.reset_index(drop=True, inplace=True)
+        df = df.dropna(how='all')
         return df
 
 
@@ -186,8 +196,8 @@ class EscalatorAgent:
                     path: str,
                     opener_path: str 
                 ) -> List[Lead]:
-        data = self.read_excel_dynamic(path)
-        opener = pd.read_excel(opener_path)
+        data = self.read_csv_dynamic(path)
+        opener = pd.read_csv(opener_path)
         data.reset_index(inplace=True)
         leads = []
 
@@ -263,19 +273,20 @@ def parse_subject(email: str) -> str:
 
 
 def parse_body(email: str) -> str:
-    return "\n".join(email.split("\n")[1:])
+    return "\n".join(email.split("\n")[1:]).strip()
 
 
 def opener(
     prompt_path: str = "opener_prompt.md",
-    leads_path: str = "leads.xlsx",
-    opener_path: str = "opener_output.xlsx",
+    leads_path: str = "leads.csv",
+    opener_path: str = "opener_output.csv",
     model_name: str = 'gpt-3.5-turbo',
     model_temperature: float = 0,
     model_max_tokens: int = 300
     ):
     template_path = prompt_path
     agent = OpenerAgent(llm=None, template_path=template_path, leads_path=leads_path, model_name=model_name, model_temperature=model_temperature, model_max_tokens=model_max_tokens)
+    
     data = agent.generate_email()
     opener_df = {
         "Model Name": [],
@@ -296,15 +307,15 @@ def opener(
         opener_df["Email Subject"].append(parse_subject(data['emails'][i].content))
         opener_df["Email Body"].append(parse_body(data['emails'][i].content))
     p_data = pd.DataFrame(opener_df)
-    p_data.to_excel(opener_path, index=False)
+    p_data.to_csv(opener_path, index=False)
     print("Opener output saved to: ", opener_path)
 
 
 def escalator(
     prompt_path: str = "escalator_prompt.md",
-    leads_path: str = "leads.xlsx",
-    opener_path: str = "opener_output.xlsx",
-    escalator_path: str = "escalator_output.xlsx",
+    leads_path: str = "leads.csv",
+    opener_path: str = "opener_output.csv",
+    escalator_path: str = "escalator_output.csv",
     model_name: str = 'gpt-3.5-turbo',
     model_temperature: float = 0.2,
     model_max_tokens: int = 300
@@ -338,9 +349,10 @@ def escalator(
         escalator_df["Agent Response"].append("NULL" if "Escalated" in data["bot_responses"][i].content else data["bot_responses"][i].content)
     
     e_data = pd.DataFrame(escalator_df)
-    e_data.to_excel(escalator_path, index=False)
+    e_data.to_csv(escalator_path, index=False)
     
         
 # if __name__ == "__main__":
-#     main()
-#     escalator()
+    # os.environ['OPENAI_API_KEY'] = "sk-proj-xuqloOK7cL0l7KvR78P4T3BlbkFJVcIqF9TqqcPbnVDxY6Fe"
+    # opener()
+    # escalator()
