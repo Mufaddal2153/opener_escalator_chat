@@ -353,6 +353,5 @@ def escalator(
     
         
 # if __name__ == "__main__":
-    # os.environ['OPENAI_API_KEY'] = "sk-proj-xuqloOK7cL0l7KvR78P4T3BlbkFJVcIqF9TqqcPbnVDxY6Fe"
     # opener()
     # escalator()
