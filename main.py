@@ -3,6 +3,7 @@ import pandas as pd, os
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 
+
 class Lead:
     def __init__(
         self, name: str,
@@ -122,12 +123,14 @@ class OpenerAgent:
             "looking_for": []
         }
         print("Opener Generating emails...")
+
         for i, prompt in enumerate(self.prompts):
             email = self.llm.invoke(prompt)
             data['emails'].append(email)
             data['prompts'].append(prompt)
             data['name'].append(self.leads[i].name)
             data['looking_for'].append(self.leads[i].looking_for)
+
         print("Opener Emails generated!")
         return data
 
@@ -187,6 +190,7 @@ class EscalatorAgent:
         opener = pd.read_excel(opener_path)
         data.reset_index(inplace=True)
         leads = []
+
         for i, row in data.iterrows():
             lead = Lead(
                 name=row["Name"],
@@ -225,6 +229,7 @@ class EscalatorAgent:
             )
         return prompts
     
+
     def generate_email(self) -> List[str]:
         data = {
             "model_name": self.model_name,
@@ -238,6 +243,7 @@ class EscalatorAgent:
             "email_body": [],
             "lead_response": []
         }
+
         for i, prompt in enumerate(self.prompts):
             bot_response = self.llm.invoke(prompt)
             data['bot_responses'].append(bot_response)
@@ -247,14 +253,18 @@ class EscalatorAgent:
             data['email_subject'].append(self.leads[i].email_subject)
             data['email_body'].append(self.leads[i].email_body)
             data['lead_response'].append(self.leads[i].lead_response)
+
         print("Escalator Emails generated!")
         return data
+
 
 def parse_subject(email: str) -> str:
     return email.split("\n")[0]
 
+
 def parse_body(email: str) -> str:
     return "\n".join(email.split("\n")[1:])
+
 
 def opener(
     prompt_path: str = "opener_prompt.md",
@@ -276,6 +286,7 @@ def opener(
         "Email Subject": [],
         "Email Body": [],
     }
+
     for i in range(len(data['emails'])):
         opener_df["Model Name"].append(data['model_name'])
         opener_df["Temperature"].append(data['temperature'])
@@ -287,6 +298,7 @@ def opener(
     p_data = pd.DataFrame(opener_df)
     p_data.to_excel(opener_path, index=False)
     print("Opener output saved to: ", opener_path)
+
 
 def escalator(
     prompt_path: str = "escalator_prompt.md",
@@ -312,6 +324,7 @@ def escalator(
         "Lead Status": [],
         "Agent Response": []
     }
+    
     for i in range(len(data['bot_responses'])):
         escalator_df["Model Name"].append(data['model_name'])
         escalator_df["Temperature"].append(data['temperature'])
@@ -328,7 +341,6 @@ def escalator(
     e_data.to_excel(escalator_path, index=False)
     
         
-
 # if __name__ == "__main__":
 #     main()
 #     escalator()
